@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
-from rest_framework import viewsets, permissions, filters, serializers
+from rest_framework import viewsets, permissions, filters, serializers, mixins
 from rest_framework.pagination import LimitOffsetPagination
 
 from posts.models import Post, Group
@@ -10,6 +10,7 @@ from api.permissions import AuthorOrReadOnly
 
 
 class PostViewSet(viewsets.ModelViewSet):
+    '''Функция представления для постов.'''
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     pagination_class = LimitOffsetPagination
@@ -20,6 +21,7 @@ class PostViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
+    '''Функция представления для комментариев.'''
     serializer_class = CommentSerializer
     permission_classes = (AuthorOrReadOnly,)
 
@@ -33,7 +35,14 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user, post=post)
 
 
-class FollowViewSet(viewsets.ModelViewSet):
+class FollowViewSet(mixins.CreateModelMixin,
+                    mixins.ListModelMixin,
+                    mixins.RetrieveModelMixin,
+                    viewsets.GenericViewSet):
+    '''
+    Функция представления для подписок.
+    Только действия получения информации о подписках и их создания.
+    '''
     serializer_class = FollowSerializer
     permission_classes = (permissions.IsAuthenticated,)
     filter_backends = (filters.SearchFilter,)
@@ -52,5 +61,6 @@ class FollowViewSet(viewsets.ModelViewSet):
 
 
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
+    '''Функция представления для групп.'''
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
